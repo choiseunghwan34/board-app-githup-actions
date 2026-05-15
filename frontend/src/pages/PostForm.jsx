@@ -124,7 +124,7 @@ export default function PostForm() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">내용 2*</label>
+            <label className="form-label">내용 3*</label>
             <textarea
               className="form-input"
               placeholder="내용을 입력하세요"
