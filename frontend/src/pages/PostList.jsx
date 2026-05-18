@@ -56,7 +56,7 @@ export default function PostList() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">게시판 수정본22</h1>
+        <h1 className="page-title">게시판 수정본232</h1>
         {isLoggedIn && (
           <button
             className="btn btn-primary"
