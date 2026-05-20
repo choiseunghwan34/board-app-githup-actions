@@ -7,9 +7,10 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: AWS 자격증명 설정
         uses: aws-actions/configure-aws-credentials@v2
@@ -41,39 +42,42 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: k8s yml 파일을 EC2에 복사
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "k8s/"
-          target: "~/board-app-github-actions/"
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "k8s/backend-configmap.yaml,k8s/backend-deployment.yaml,k8s/backend-service.yaml,k8s/frontend-deployment.yaml,k8s/frontend-service.yaml"
+          target: "/home/ubuntu/board-app-github-actions"
 
       - name: EC2에 SSH 접속하여 배포
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            export KUBECONFIG=~/.kube/config
-            # ↑ 이게 없으면 permission denied 에러 발생!
-            # k3s 기본 kubeconfig는 root 전용(/etc/rancher/k3s/k3s.yaml)이라
-            # ubuntu 사용자용 ~/.kube/config를 명시적으로 지정해야 함
+            export KUBECONFIG=/home/ubuntu/.kube/config
 
-            kubectl apply -f ~/board-app-github-actions/k8s/backend-configmap.yml
-            kubectl apply -f ~/board-app-github-actions/k8s/backend-secret.yml
-            kubectl apply -f ~/board-app-github-actions/k8s/backend-deployment.yml
-            kubectl apply -f ~/board-app-github-actions/k8s/backend-service.yml
-            kubectl apply -f ~/board-app-github-actions/k8s/frontend-deployment.yml
-            kubectl apply -f ~/board-app-github-actions/k8s/frontend-service.yml
+            ls -al /home/ubuntu/board-app-github-actions/k8s
+
+            kubectl apply -f /home/ubuntu/board-app-github-actions/k8s/backend-configmap.yaml
+            kubectl apply -f /home/ubuntu/board-app-github-actions/k8s/backend-deployment.yaml
+            kubectl apply -f /home/ubuntu/board-app-github-actions/k8s/backend-service.yaml
+            kubectl apply -f /home/ubuntu/board-app-github-actions/k8s/frontend-deployment.yaml
+            kubectl apply -f /home/ubuntu/board-app-github-actions/k8s/frontend-service.yaml
+
             kubectl rollout restart deployment/backend-deployment
             kubectl rollout restart deployment/frontend-deployment
+
+            kubectl get pods
+            kubectl get svc
 
       - name: 배포 성공 알림
         if: success()
