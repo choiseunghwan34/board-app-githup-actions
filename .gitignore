@@ -33,3 +33,9 @@ Thumbs.db
 
 # Docker
 *.log
+
+# Github Actions
+#workflows.disabled/
+
+# kubernetes
+k8s/backend-secret.yaml
